@@ -46,8 +46,22 @@ fi
 log "Claude Code 실행 중..."
 cd "$PROJECT_DIR"
 
-claude -p "/daily-summary" \
-  --allowedTools "Bash(git:*)" "Bash(curl:*)" "Bash(az:*)" "Read" "Write" "Glob" \
+# 스킬 파일 경로
+SKILL_FILE="$PROJECT_DIR/.claude/skills/daily-summary/SKILL.local.md"
+if [ ! -f "$SKILL_FILE" ]; then
+  SKILL_FILE="$PROJECT_DIR/.claude/skills/daily-summary/SKILL.md"
+fi
+
+if [ ! -f "$SKILL_FILE" ]; then
+  log "ERROR: 스킬 파일을 찾을 수 없음"
+  exit 1
+fi
+
+# 스킬 내용을 프롬프트로 전달
+claude -p "아래 스킬을 실행해주세요.
+
+$(cat "$SKILL_FILE")" \
+  --allowedTools "Bash(git:*)" "Bash(curl:*)" "Bash(az:*)" "Bash(jq:*)" "Read" "Write" "Glob" \
   --max-turns 50 \
   >> "$LOG_FILE" 2>&1
 

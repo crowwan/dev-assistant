@@ -149,27 +149,35 @@ Chrome 연동이 가능한 경우, 휴가/근태 시스템에서 오늘 부재�
 1. 탭 컨텍스트 확인
    mcp__claude-in-chrome__tabs_context_mcp
 
-2. 근태 시스템 이동
+2. 근태 시스템 홈 이동
    mcp__claude-in-chrome__navigate → https://your-hr-system.com
 
 3. 대기 (로딩)
    mcp__claude-in-chrome__computer (wait: 3초)
 
-4. 스크린샷
+4. 스크린샷으로 로그인 상태 확인
    mcp__claude-in-chrome__computer (screenshot)
-
-5. 로그인 상태 확인
    - 로그인 폼이 보이면 (이메일/비밀번호 입력란) → 로그인 안 됨
    - 홈 화면이 보이면 → 로그인 됨
 
-6-A. 로그인 안 됨:
+5-A. 로그인 안 됨:
    - 휴가 정보 수집 스킵
    - 메시지에 표시: "👥 오늘 부재: (로그인 필요 - 수동 확인)"
 
-6-B. 로그인 됨:
-   - 부재 정보 파싱
-   - "휴가", "연차", "반차", "외근", "재택" 등 상태
-   - 팀원만 필터링
+5-B. 로그인 됨 → 휴가/근무 페이지로 이동:
+   a. 근태 시스템의 휴가/근무 메뉴로 네비게이션
+      mcp__claude-in-chrome__find → 해당 메뉴
+      mcp__claude-in-chrome__computer (left_click)
+
+   b. 대기 (페이지 로딩)
+      mcp__claude-in-chrome__computer (wait: 2초)
+
+   c. 스크린샷
+      mcp__claude-in-chrome__computer (screenshot)
+
+   d. 휴가/부재 정보 파싱
+      - "휴가", "연차", "반차", "외근", "재택" 등 상태
+      - 팀원만 필터링
 ```
 
 **출력 형식:**
