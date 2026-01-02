@@ -1,0 +1,12 @@
+# Reports (선택적으로 커밋)
+# reports/
+
+# Logs
+*.log
+
+# Temp files
+*.tmp
+.DS_Store
+
+# Local settings
+.claude/settings.local.json
