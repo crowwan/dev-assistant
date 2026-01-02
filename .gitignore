@@ -16,3 +16,4 @@ config.local.*
 
 # Local settings
 .claude/settings.local.json
+blog-post.md
