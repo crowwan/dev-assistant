@@ -146,13 +146,94 @@ launchctl load ~/Library/LaunchAgents/com.dev-assistant.daily.plist
 launchctl list | grep dev-assistant
 ```
 
-## 커스터마이징
+## 로컬 설정 (본인 환경에 맞게 커스터마이징)
 
-본인 환경에 맞게 수정이 필요합니다:
+이 저장소는 **템플릿**입니다. 실제 사용하려면 로컬 설정 파일을 만들어야 합니다.
 
-1. **SKILL.md**: Jira 프로젝트 키, URL, Git author 등
-2. **plist**: 실행 시간, 스크립트 경로
-3. **daily-summary.sh**: 환경 변수, 경로
+### 왜 로컬 파일이 필요한가?
+
+| 파일 | GitHub (템플릿) | 로컬 (실제 사용) |
+|------|----------------|-----------------|
+| SKILL.md | `your-company.atlassian.net` | 실제 Jira URL |
+| plist | `/path/to/dev-assistant` | 실제 경로 |
+
+로컬 파일은 `.local` 접미사를 붙이면 자동으로 gitignore됩니다.
+
+### 설정 방법
+
+#### 1. 스킬 로컬 버전 생성
+
+```bash
+# 템플릿 복사
+cp .claude/skills/daily-summary/SKILL.md \
+   .claude/skills/daily-summary/SKILL.local.md
+
+# 본인 환경에 맞게 수정
+# - Jira URL: your-company.atlassian.net → 실제 URL
+# - 프로젝트 키: YOUR_PROJECT → 실제 프로젝트 키
+# - Git author: Your Name → 본인 이름/이메일
+# - Azure DevOps/GitHub 설정
+```
+
+#### 2. settings.local.json 생성
+
+```bash
+# .claude/settings.local.json 생성 (이미 gitignore됨)
+cat > .claude/settings.local.json << 'EOF'
+{
+  "skills": {
+    "daily-summary": {
+      "type": "prompt",
+      "path": ".claude/skills/daily-summary/SKILL.local.md",
+      "description": "하루 업무 요약 (user)"
+    }
+  }
+}
+EOF
+```
+
+#### 3. launchd 로컬 버전 생성 (자동화 사용 시)
+
+```bash
+# 템플릿 복사
+cp scripts/com.dev-assistant.daily.plist \
+   scripts/com.dev-assistant.daily.local.plist
+
+# 경로 수정
+# - /path/to/dev-assistant → 실제 경로
+# - /Users/your-username → 실제 홈 디렉토리
+
+# launchd에 로컬 버전으로 등록
+ln -sf $(pwd)/scripts/com.dev-assistant.daily.local.plist \
+       ~/Library/LaunchAgents/com.dev-assistant.daily.plist
+
+launchctl load ~/Library/LaunchAgents/com.dev-assistant.daily.plist
+```
+
+### 파일 구조 (설정 후)
+
+```
+dev-assistant/
+├── .claude/
+│   ├── settings.local.json          # ← 로컬 (gitignore)
+│   └── skills/daily-summary/
+│       ├── SKILL.md                  # 템플릿 (GitHub)
+│       └── SKILL.local.md            # ← 로컬 (gitignore)
+├── scripts/
+│   ├── com.dev-assistant.daily.plist       # 템플릿 (GitHub)
+│   └── com.dev-assistant.daily.local.plist # ← 로컬 (gitignore)
+└── reports/                          # ← 로컬 (gitignore)
+```
+
+### gitignore 패턴
+
+```
+*.local.md
+*.local.plist
+*.local.sh
+reports/
+.claude/settings.local.json
+```
 
 자세한 내용은 `docs/concepts.md` 참조.
 
