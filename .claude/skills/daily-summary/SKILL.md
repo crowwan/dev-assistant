@@ -14,66 +14,65 @@
 ### 1단계: 오늘 날짜 확인
 
 ```bash
-# KST 기준 오늘 날짜
+# KST 기준 오늘 날짜 (타임존은 환경에 맞게 수정)
 TODAY=$(TZ=Asia/Seoul date +%Y-%m-%d)
 echo "오늘: $TODAY"
 ```
 
 ### 2단계: Git 커밋 수집
 
-dentbird-solutions 저장소에서 오늘 내 커밋을 수집합니다.
+프로젝트 저장소에서 오늘 내 커밋을 수집합니다.
 
 ```bash
-# dentbird-solutions 저장소 경로
-REPO_PATH="${DENTBIRD_REPO:-$HOME/Works/devops/dentbird-solutions}"
+# 프로젝트 저장소 경로 (환경에 맞게 수정)
+REPO_PATH="${PROJECT_REPO:-$HOME/path/to/your-project}"
 
 cd "$REPO_PATH"
 
-# 오늘 내 커밋 조회 (author 이름은 환경에 맞게)
+# 오늘 내 커밋 조회 (author 이름은 환경에 맞게 수정)
 git log --oneline --since="$TODAY 00:00:00" --until="$TODAY 23:59:59" \
-  --author="Jinwan\|jinwan\|김진완" \
+  --author="Your Name\|your-email" \
   --format="%h %s"
 ```
 
 **출력 예시:**
 ```
-a1b2c3d feat(cloud-desktop): 로그인 페이지 UI 개선
-d4e5f6g fix(embed-modules): 다이얼로그 닫힘 버그 수정
+a1b2c3d feat(module): 새 기능 추가
+d4e5f6g fix(component): 버그 수정
 ```
 
 ### 3단계: Jira 이슈 수집
 
-오늘 내가 작업한 D1 이슈를 조회합니다.
+오늘 내가 작업한 이슈를 조회합니다.
 
 **JQL 쿼리:**
 ```
-project = D1 AND assignee = currentUser() AND updated >= startOfDay()
+project = YOUR_PROJECT AND assignee = currentUser() AND updated >= startOfDay()
 ```
 
 **API 호출:**
 ```bash
-curl -s -X GET \
-  "https://imagoworks.atlassian.net/rest/api/3/search" \
-  -H "Authorization: Basic $(echo -n "$JIRA_EMAIL:$JIRA_API_TOKEN" | base64)" \
+curl -s -X POST \
+  "https://your-company.atlassian.net/rest/api/3/search/jql" \
+  -H "Authorization: Basic $(printf '%s' "$JIRA_EMAIL:$JIRA_API_TOKEN" | base64)" \
   -H "Content-Type: application/json" \
-  --data-urlencode "jql=project = D1 AND assignee = currentUser() AND updated >= startOfDay()" \
-  --data-urlencode "fields=key,summary,status"
+  -d '{"jql":"project = YOUR_PROJECT AND assignee = currentUser() AND updated >= startOfDay()","fields":["key","summary","status"]}'
 ```
 
 **응답 파싱:**
-- `issues[].key` - 이슈 키 (D1-1234)
+- `issues[].key` - 이슈 키 (PROJ-1234)
 - `issues[].fields.summary` - 제목
 - `issues[].fields.status.name` - 상태
 
 ### 4단계: PR 상태 수집
 
-Azure DevOps에서 내 PR 상태를 조회합니다.
+#### Azure DevOps 사용 시:
 
 **내가 만든 PR:**
 ```bash
 az repos pr list \
-  --organization "https://dev.azure.com/ImagoWorks" \
-  --project "dentbird-solutions" \
+  --organization "https://dev.azure.com/YourOrg" \
+  --project "your-project" \
   --creator "$(az account show --query user.name -o tsv)" \
   --status all \
   --query "[?createdDate >= '$TODAY']" \
@@ -83,11 +82,23 @@ az repos pr list \
 **내가 리뷰할 PR:**
 ```bash
 az repos pr list \
-  --organization "https://dev.azure.com/ImagoWorks" \
-  --project "dentbird-solutions" \
+  --organization "https://dev.azure.com/YourOrg" \
+  --project "your-project" \
   --reviewer "$(az account show --query user.name -o tsv)" \
   --status active \
   -o json
+```
+
+#### GitHub 사용 시:
+
+**내가 만든 PR:**
+```bash
+gh pr list --author @me --state all --json number,title,state
+```
+
+**내가 리뷰할 PR:**
+```bash
+gh pr list --search "review-requested:@me" --json number,title,author
 ```
 
 ### 5단계: 요약 생성
@@ -100,25 +111,24 @@ az repos pr list \
 # {YYYY-MM-DD} ({요일}) 업무 요약
 
 ## Git 커밋 ({N}건)
-- `a1b2c3d` feat(cloud-desktop): 로그인 페이지 UI 개선
-- `d4e5f6g` fix(embed-modules): 다이얼로그 닫힘 버그 수정
+- `a1b2c3d` feat(module): 새 기능 추가
+- `d4e5f6g` fix(component): 버그 수정
 
 ## Jira 이슈 ({N}건)
 | 키 | 제목 | 상태 |
 |----|------|------|
-| [D1-1234](https://imagoworks.atlassian.net/browse/D1-1234) | 로그인 버그 수정 | 개발 단계 |
-| [D1-1235](https://imagoworks.atlassian.net/browse/D1-1235) | API 응답 포맷 변경 | 작업 완료 |
+| [PROJ-1234](https://your-company.atlassian.net/browse/PROJ-1234) | 이슈 제목 | 진행 중 |
 
 ## PR 상태
 ### 내가 만든 PR
 | ID | 제목 | 상태 |
 |----|------|------|
-| [#28500](https://dev.azure.com/...) | feat: 로그인 개선 | 리뷰 대기 |
+| #123 | feat: 새 기능 | 리뷰 대기 |
 
 ### 리뷰 요청받은 PR
 | ID | 작성자 | 제목 |
 |----|--------|------|
-| [#28510](https://dev.azure.com/...) | Sangmin | fix: API 버그 |
+| #456 | 동료이름 | fix: 버그 수정 |
 
 ---
 생성: {HH:MM}
@@ -152,21 +162,21 @@ az repos pr list \
       "type": "section",
       "text": {
         "type": "mrkdwn",
-        "text": "*커밋*\n• `a1b2c3d` feat: 로그인 개선\n• `d4e5f6g` fix: 버그 수정"
+        "text": "*커밋*\n• `a1b2c3d` feat: 새 기능\n• `d4e5f6g` fix: 버그 수정"
       }
     },
     {
       "type": "section",
       "text": {
         "type": "mrkdwn",
-        "text": "*Jira*\n• <https://imagoworks.atlassian.net/browse/D1-1234|D1-1234> 로그인 버그 수정 (작업 완료)\n• <https://imagoworks.atlassian.net/browse/D1-1235|D1-1235> API 변경 (개발 단계)"
+        "text": "*Jira*\n• <https://your-company.atlassian.net/browse/PROJ-1234|PROJ-1234> 이슈 제목 (진행 중)"
       }
     },
     {
       "type": "section",
       "text": {
         "type": "mrkdwn",
-        "text": "*PR*\n• 생성: #28500 리뷰 대기\n• 리뷰 요청: #28510 (Sangmin)"
+        "text": "*PR*\n• 생성: #123 리뷰 대기\n• 리뷰 요청: #456 (동료이름)"
       }
     }
   ]
@@ -176,7 +186,7 @@ az repos pr list \
 **전송:**
 ```bash
 curl -X POST "$SLACK_WEBHOOK" \
-  -H "Content-Type: application/json" \
+  -H "Content-Type: application/json; charset=utf-8" \
   -d @webhook_payload.json
 ```
 
@@ -187,7 +197,7 @@ curl -X POST "$SLACK_WEBHOOK" \
 | `JIRA_EMAIL` | O | Jira 계정 이메일 |
 | `JIRA_API_TOKEN` | O | Jira API 토큰 |
 | `SLACK_WEBHOOK` | O | Slack Incoming Webhook URL |
-| `DENTBIRD_REPO` | X | dentbird-solutions 경로 (기본: ~/AzureRepos/dentbird-solutions) |
+| `PROJECT_REPO` | X | 프로젝트 저장소 경로 |
 
 ## 출력
 
@@ -196,6 +206,16 @@ curl -X POST "$SLACK_WEBHOOK" \
 
 ## 주의사항
 
-- Azure DevOps는 `az login` 상태여야 합니다
-- Jira API 토큰은 https://id.atlassian.com/manage-profile/security/api-tokens 에서 생성
-- Slack 웹훅 설정: https://api.slack.com/apps → Incoming Webhooks
+- Azure DevOps: `az login` 필요
+- GitHub: `gh auth login` 필요
+- Jira API 토큰: https://id.atlassian.com/manage-profile/security/api-tokens 에서 생성
+- Slack 웹훅: https://api.slack.com/apps → Incoming Webhooks
+
+## 커스터마이징
+
+이 스킬을 본인 환경에 맞게 수정하세요:
+
+1. **Jira 프로젝트 키**: `YOUR_PROJECT` → 실제 프로젝트 키
+2. **Jira URL**: `your-company.atlassian.net` → 실제 URL
+3. **Git author**: `Your Name` → 본인 이름/이메일
+4. **Azure DevOps/GitHub**: 사용하는 플랫폼에 맞게 선택

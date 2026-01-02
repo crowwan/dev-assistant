@@ -2,19 +2,27 @@
 
 개인 개발 업무 정리 도우미입니다. 하루 동안 한 일을 자동으로 수집해서 개인 메시지로 알려줍니다.
 
+## 기능
+
+- **Git 커밋 수집**: 오늘 작성한 커밋 목록
+- **Jira 이슈 수집**: 오늘 업데이트된 담당 이슈
+- **PR 상태 확인**: 내가 만든 PR + 리뷰 요청받은 PR
+- **Slack 알림**: 요약을 Slack DM으로 전송
+
 ## 빠른 시작
 
 ```bash
 # 1. 환경 변수 설정 (~/.zshrc에 추가)
-export JIRA_EMAIL="your-email@imagoworks.ai"
+export JIRA_EMAIL="your-email@your-company.com"
 export JIRA_API_TOKEN="your-jira-api-token"
-export PERSONAL_TEAMS_WEBHOOK="https://..."
+export SLACK_WEBHOOK="https://hooks.slack.com/services/..."
 
-# 2. Azure DevOps 로그인
-az login
+# 2. Azure DevOps 또는 GitHub 로그인
+az login          # Azure DevOps
+gh auth login     # GitHub
 
 # 3. 프로젝트 폴더에서 Claude Code 실행
-cd ~/Works/personal/dev-assistant
+cd ~/path/to/dev-assistant
 claude
 
 # 4. 일일 요약 실행
@@ -31,64 +39,48 @@ claude
 4. 생성된 토큰 복사
 5. `~/.zshrc`에 추가:
    ```bash
-   export JIRA_EMAIL="your-email@imagoworks.ai"
+   export JIRA_EMAIL="your-email@your-company.com"
    export JIRA_API_TOKEN="복사한-토큰"
    ```
 
-### 2. Teams 개인 웹훅 설정
+### 2. Slack Incoming Webhook 설정
 
-**방법 A: Power Automate (추천)**
-
-개인 채팅으로 메시지를 보내려면 Power Automate를 사용합니다.
-
-1. https://make.powerautomate.com 접속
-2. **Create** > **Instant cloud flow** 선택
-3. 트리거: **When a HTTP request is received** 선택
-4. 액션 추가: **Microsoft Teams** > **Post message in a chat or channel**
-   - Post as: Flow bot
-   - Post in: Chat with Flow bot
-   - Message: `@{triggerBody()?['text']}`
-5. **Save** 후 HTTP POST URL 복사
-6. `~/.zshrc`에 추가:
+1. https://api.slack.com/apps 접속
+2. **Create New App** > **From scratch**
+3. 앱 이름 입력, Workspace 선택
+4. **Incoming Webhooks** > **Activate** → On
+5. **Add New Webhook to Workspace** 클릭
+6. 채널 선택 (Slackbot = 본인 DM)
+7. Webhook URL 복사
+8. `~/.zshrc`에 추가:
    ```bash
-   export PERSONAL_TEAMS_WEBHOOK="복사한-URL"
+   export SLACK_WEBHOOK="복사한-URL"
    ```
 
-**방법 B: 개인 채널 + Incoming Webhook**
+### 3. Git 플랫폼 로그인
 
-1. Teams에서 개인용 팀 생성 (예: "My Workspace")
-2. 채널 생성 (예: "Daily Summary")
-3. 채널 설정 > **Connectors** > **Incoming Webhook**
-4. 이름 입력 후 **Create**
-5. 웹훅 URL 복사
-6. `~/.zshrc`에 추가:
-   ```bash
-   export PERSONAL_TEAMS_WEBHOOK="복사한-URL"
-   ```
-
-### 3. Azure DevOps 로그인
-
+**Azure DevOps:**
 ```bash
-# 로그인 (브라우저 열림)
 az login
-
-# 확인
-az account show
+az account show  # 확인
 ```
 
-### 4. dentbird-solutions 저장소 경로 (선택)
-
-기본값: `~/AzureRepos/dentbird-solutions`
-
-다른 경로라면 설정:
+**GitHub:**
 ```bash
-export DENTBIRD_REPO="/path/to/dentbird-solutions"
+gh auth login
+gh auth status  # 확인
+```
+
+### 4. 프로젝트 저장소 경로 (선택)
+
+```bash
+export PROJECT_REPO="~/path/to/your-project"
 ```
 
 ## 사용법
 
 ```bash
-# 일일 요약 생성 + Teams 전송
+# 일일 요약 생성 + Slack 전송
 /daily-summary
 
 # 요약만 생성 (전송 안함)
@@ -103,83 +95,73 @@ export DENTBIRD_REPO="/path/to/dentbird-solutions"
 # 2026-01-02 (금) 업무 요약
 
 ## Git 커밋 (3건)
-- `a1b2c3d` feat(cloud-desktop): 로그인 페이지 UI 개선
-- `d4e5f6g` fix(embed-modules): 다이얼로그 닫힘 버그 수정
-- `h7i8j9k` refactor: 불필요한 import 정리
+- `a1b2c3d` feat(module): 새 기능 추가
+- `d4e5f6g` fix(component): 버그 수정
+- `h7i8j9k` refactor: 코드 정리
 
 ## Jira 이슈 (2건)
 | 키 | 제목 | 상태 |
 |----|------|------|
-| D1-1234 | 로그인 버그 수정 | 작업 완료 |
-| D1-1235 | API 응답 포맷 변경 | 개발 단계 |
+| PROJ-1234 | 로그인 버그 수정 | 완료 |
+| PROJ-1235 | API 응답 변경 | 진행 중 |
 
 ## PR 상태
 ### 내가 만든 PR (1건)
 | ID | 제목 | 상태 |
 |----|------|------|
-| #28500 | feat: 로그인 개선 | 리뷰 대기 |
+| #123 | feat: 새 기능 | 리뷰 대기 |
 
 ### 리뷰 요청받은 PR (2건)
 | ID | 작성자 | 제목 |
 |----|--------|------|
-| #28510 | Sangmin | fix: API 버그 |
-| #28511 | Adam | feat: 새 기능 |
+| #456 | 동료A | fix: 버그 수정 |
+| #789 | 동료B | feat: 기능 추가 |
 ```
 
-### Teams 메시지
+### Slack 메시지
 
 ```
 📊 2026-01-02 업무 요약
 
 Git 커밋: 3건 | Jira: 2건 | PR: 1건 생성, 2건 리뷰 대기
 
-✅ 완료: D1-1234 로그인 버그 수정
-🔄 진행: D1-1235 API 응답 포맷 변경
-⏳ 리뷰 대기: PR #28500
+✅ 완료: PROJ-1234 로그인 버그 수정
+🔄 진행: PROJ-1235 API 응답 변경
+⏳ 리뷰 대기: PR #123
 ```
 
 ## 자동화 (선택)
 
-매일 퇴근 시간에 자동 실행하려면:
+매일 퇴근 시간에 자동 실행하려면 `scripts/` 폴더의 launchd 설정을 사용하세요.
 
-### launchd (macOS)
-
-`~/Library/LaunchAgents/com.dev-assistant.daily.plist`:
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>Label</key>
-    <string>com.dev-assistant.daily</string>
-    <key>ProgramArguments</key>
-    <array>
-        <string>/bin/bash</string>
-        <string>-c</string>
-        <string>cd ~/Works/personal/dev-assistant && claude -p "/daily-summary"</string>
-    </array>
-    <key>StartCalendarInterval</key>
-    <dict>
-        <key>Hour</key>
-        <integer>18</integer>
-        <key>Minute</key>
-        <integer>0</integer>
-    </dict>
-    <key>StandardOutPath</key>
-    <string>/tmp/dev-assistant.log</string>
-    <key>StandardErrorPath</key>
-    <string>/tmp/dev-assistant.log</string>
-</dict>
-</plist>
-```
-
-등록:
 ```bash
+# plist 파일 경로 수정 후
+ln -sf /path/to/dev-assistant/scripts/com.dev-assistant.daily.plist \
+       ~/Library/LaunchAgents/com.dev-assistant.daily.plist
+
+# 등록
 launchctl load ~/Library/LaunchAgents/com.dev-assistant.daily.plist
+
+# 확인
+launchctl list | grep dev-assistant
 ```
+
+## 커스터마이징
+
+본인 환경에 맞게 수정이 필요합니다:
+
+1. **SKILL.md**: Jira 프로젝트 키, URL, Git author 등
+2. **plist**: 실행 시간, 스크립트 경로
+3. **daily-summary.sh**: 환경 변수, 경로
+
+자세한 내용은 `docs/concepts.md` 참조.
 
 ## 확장 아이디어
 
 - `/my-prs` - 내 PR 상태만 빠르게 확인
 - `/weekly-summary` - 주간 요약 생성
 - `/standup` - 스탠드업 미팅용 요약
+
+## 라이선스
+
+MIT
