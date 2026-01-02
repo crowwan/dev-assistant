@@ -1,6 +1,12 @@
 # Reports (회사 업무 내용 포함)
 reports/
 
+# Local config (실제 경로/설정 포함)
+*.local.plist
+*.local.sh
+*.local.md
+config.local.*
+
 # Logs
 *.log
 
