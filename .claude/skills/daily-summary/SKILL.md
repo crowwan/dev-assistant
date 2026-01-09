@@ -68,14 +68,22 @@ curl -s -X POST \
 
 #### Azure DevOps 사용 시:
 
-**내가 만든 PR:**
+**오늘 머지된 내 PR:**
+```bash
+az repos pr list \
+  --organization "https://dev.azure.com/YourOrg" \
+  --project "your-project" \
+  --status completed \
+  -o json | jq -r --arg today "$TODAY" '.[] | select(.closedDate >= $today and .createdBy.uniqueName == "your-email") | "#\(.pullRequestId) \(.title)"'
+```
+
+**내가 만든 PR (리뷰 대기):**
 ```bash
 az repos pr list \
   --organization "https://dev.azure.com/YourOrg" \
   --project "your-project" \
   --creator "$(az account show --query user.name -o tsv)" \
-  --status all \
-  --query "[?createdDate >= '$TODAY']" \
+  --status active \
   -o json
 ```
 
@@ -91,9 +99,15 @@ az repos pr list \
 
 #### GitHub 사용 시:
 
-**내가 만든 PR:**
+**오늘 머지된 내 PR:**
 ```bash
-gh pr list --author @me --state all --json number,title,state
+gh pr list --author @me --state merged --json number,title,mergedAt \
+  --jq ".[] | select(.mergedAt >= \"${TODAY}T00:00:00Z\")"
+```
+
+**내가 만든 PR (리뷰 대기):**
+```bash
+gh pr list --author @me --state open --json number,title,state
 ```
 
 **내가 리뷰할 PR:**
@@ -120,10 +134,15 @@ gh pr list --search "review-requested:@me" --json number,title,author
 | [PROJ-1234](https://your-company.atlassian.net/browse/PROJ-1234) | 이슈 제목 | 진행 중 |
 
 ## PR 상태
-### 내가 만든 PR
-| ID | 제목 | 상태 |
-|----|------|------|
-| #123 | feat: 새 기능 | 리뷰 대기 |
+### 오늘 머지된 PR ({N}건)
+| ID | 제목 |
+|----|------|
+| #123 | feat: 새 기능 |
+
+### 내가 만든 PR (리뷰 대기)
+| ID | 제목 |
+|----|------|
+| #789 | feat: 다른 기능 |
 
 ### 리뷰 요청받은 PR
 | ID | 작성자 | 제목 |
@@ -152,7 +171,7 @@ gh pr list --search "review-requested:@me" --json number,title,author
       "type": "section",
       "text": {
         "type": "mrkdwn",
-        "text": "*Git 커밋*: {N}건 | *Jira*: {N}건 | *PR*: {N}건"
+        "text": "*Git 커밋*: {N}건 | *Jira*: {N}건 | *머지된 PR*: {N}건"
       }
     },
     {
@@ -176,7 +195,21 @@ gh pr list --search "review-requested:@me" --json number,title,author
       "type": "section",
       "text": {
         "type": "mrkdwn",
-        "text": "*PR*\n• 생성: #123 리뷰 대기\n• 리뷰 요청: #456 (동료이름)"
+        "text": "*오늘 머지된 PR*\n• #123 feat: 새 기능\n• #456 fix: 버그 수정"
+      }
+    },
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": "*리뷰 대기 PR*\n• #789 feat: 다른 기능"
+      }
+    },
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": "*리뷰 요청받은 PR*\n• #101 (동료이름)"
       }
     }
   ]
