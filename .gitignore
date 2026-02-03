@@ -14,6 +14,9 @@ config.local.*
 *.tmp
 .DS_Store
 
+# Dependencies
+node_modules/
+
 # Local settings
 .claude/settings.local.json
 blog-post.md
