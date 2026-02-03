@@ -11,11 +11,11 @@
         <string>/path/to/dev-assistant/scripts/standup.sh</string>
     </array>
 
-    <!-- 매일 08:00 실행 -->
+    <!-- 매일 03:00 실행 -->
     <key>StartCalendarInterval</key>
     <dict>
         <key>Hour</key>
-        <integer>8</integer>
+        <integer>3</integer>
         <key>Minute</key>
         <integer>0</integer>
     </dict>

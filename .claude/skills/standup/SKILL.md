@@ -164,18 +164,22 @@ Chrome 연동이 가능한 경우, 휴가/근태 시스템에서 오늘 부재�
    - 휴가 정보 수집 스킵
    - 메시지에 표시: "👥 오늘 부재: (로그인 필요 - 수동 확인)"
 
-5-B. 로그인 됨 → 휴가/근무 페이지로 이동:
-   a. 근태 시스템의 휴가/근무 메뉴로 네비게이션
-      mcp__claude-in-chrome__find → 해당 메뉴
+5-B. 로그인 됨 → 구성원 근무 페이지로 이동:
+   a. 왼쪽 메뉴에서 "근무" 클릭
+      mcp__claude-in-chrome__find → "근무" 메뉴
       mcp__claude-in-chrome__computer (left_click)
 
-   b. 대기 (페이지 로딩)
+   b. "구성원 근무" 클릭
+      mcp__claude-in-chrome__find → "구성원 근무"
+      mcp__claude-in-chrome__computer (left_click)
+
+   c. 대기 (페이지 로딩)
       mcp__claude-in-chrome__computer (wait: 2초)
 
-   c. 스크린샷
+   d. 스크린샷
       mcp__claude-in-chrome__computer (screenshot)
 
-   d. 휴가/부재 정보 파싱
+   e. 휴가/부재 정보 파싱
       - "휴가", "연차", "반차", "외근", "재택" 등 상태
       - 팀원만 필터링
 ```
