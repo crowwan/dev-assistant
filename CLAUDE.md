@@ -29,6 +29,20 @@
 - 오늘 변경된 내 Jira 이슈
 - 내 PR 상태 (생성/머지/리뷰)
 
+### burnout-radar (주간 번아웃 감지)
+```bash
+/burnout-radar              # 주간 분석 + Slack 전송
+/burnout-radar --dry-run    # 분석만 (전송 안함)
+```
+
+**분석 지표:**
+- 야근 지표 (19시 이후 커밋)
+- 주말 작업 지표 (토/일 커밋)
+- 커밋 품질 지표 (메시지 길이, fix/wip 비율)
+- 시간 분포 지표 (비정상 시간대 비율)
+
+**자동 실행:** 매주 월요일 09:00 (launchd)
+
 ## 환경 변수
 
 ```bash
@@ -52,6 +66,7 @@ export PROJECT_REPO="~/path/to/your-project"
 |----------|------|
 | `.claude/skills/` | Claude Code 스킬 정의 |
 | `reports/` | 생성된 일일 요약 저장 |
+| `reports/burnout/` | 주간 번아웃 리포트 저장 |
 
 ## 링크 형식 (환경에 맞게 수정)
 
