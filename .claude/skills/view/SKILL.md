@@ -10,8 +10,7 @@ description: 마크다운 문서를 새 터미널 창에서 glow로 렌더링
 ## 사용법
 
 ```bash
-/view <path>              # 터미널에서 파일 열기 (기존 창 재사용)
-/view <path> --new        # 새 터미널 창에서 열기
+/view <path>              # 새 터미널 창에서 파일 열기
 /view --last              # 마지막 수정된 문서 열기
 /view --list              # 최근 문서 목록 (Claude Code에서 표시)
 ```
@@ -22,7 +21,6 @@ description: 마크다운 문서를 새 터미널 창에서 glow로 렌더링
 
 - `--last`: 마지막 수정된 .md 파일 열기
 - `--list`: 최근 문서 목록 표시 (새 터미널 안 열음)
-- `--new`: 새 터미널 창에서 열기 (기본: 기존 창 재사용)
 - 그 외: 파일 경로로 간주
 
 ---
@@ -92,34 +90,9 @@ if ! command -v glow &> /dev/null; then
 fi
 ```
 
-**Step 3**: 터미널에서 glow 실행
+**Step 3**: 새 터미널 창에서 glow 실행
 
-`--new` 옵션이 없으면 기존 터미널 창을 재사용합니다 (새 탭으로 열기).
-`--new` 옵션이 있으면 새 창을 엽니다.
-
-**macOS Terminal.app - 기존 창 재사용 (기본):**
-```bash
-osascript <<EOF
-tell application "Terminal"
-  if (count of windows) > 0 then
-    -- 기존 창의 현재 탭에서 실행
-    do script "glow -p '$FILE_PATH'" in front window
-  else
-    -- 창이 없으면 새로 열기
-    do script "glow -p '$FILE_PATH'"
-  end if
-  activate
-end tell
-
-tell application "System Events"
-  tell process "Terminal"
-    set frontmost to true
-  end tell
-end tell
-EOF
-```
-
-**macOS Terminal.app - 새 창 열기 (--new):**
+**macOS Terminal.app:**
 ```bash
 osascript <<EOF
 tell application "Terminal"
@@ -135,37 +108,7 @@ end tell
 EOF
 ```
 
-**iTerm2 - 기존 창 재사용 (기본):**
-```bash
-osascript <<EOF
-tell application "iTerm"
-  if (count of windows) > 0 then
-    -- 기존 창에 새 탭 열기
-    tell current window
-      create tab with default profile
-      tell current session
-        write text "glow -p '$FILE_PATH'"
-      end tell
-    end tell
-  else
-    -- 창이 없으면 새로 열기
-    create window with default profile
-    tell current session of current window
-      write text "glow -p '$FILE_PATH'"
-    end tell
-  end if
-  activate
-end tell
-
-tell application "System Events"
-  tell process "iTerm2"
-    set frontmost to true
-  end tell
-end tell
-EOF
-```
-
-**iTerm2 - 새 창 열기 (--new):**
+**iTerm2:**
 ```bash
 osascript <<EOF
 tell application "iTerm"
