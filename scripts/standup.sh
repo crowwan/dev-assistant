@@ -64,7 +64,7 @@ claude -p "아래 스킬을 실행해주세요.
 
 $(cat "$SKILL_FILE")" \
   --chrome \
-  --allowedTools "Bash(git:*)" "Bash(curl:*)" "Bash(az:*)" "Bash(jq:*)" "Read" "Write" "Glob" "mcp__claude-in-chrome__*" \
+  --allowedTools "Bash" "Read" "Write" "Glob" "mcp__claude-in-chrome__*" \
   --max-turns 50 \
   >> "$LOG_FILE" 2>&1 &
 CLAUDE_PID=$!
