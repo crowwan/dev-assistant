@@ -17,3 +17,8 @@ config.local.*
 # Local settings
 .claude/settings.local.json
 blog-post.md
+
+# Blog posts (개인 초안/발행물, git 제외)
+blog-posts/*.md
+blog-posts/.last-find.json
+!blog-posts/.gitkeep
