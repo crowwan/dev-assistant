@@ -1,0 +1,12 @@
+{
+  "resume-reference": {
+    "phase": "check",
+    "startedAt": "2026-02-04T18:15:00+09:00",
+    "planPath": "docs/01-plan/features/resume-reference.plan.md",
+    "designPath": "docs/02-design/features/resume-reference.design.md",
+    "analysisPath": "docs/03-analysis/resume-reference.analysis.md",
+    "matchRate": 100,
+    "iterationCount": 1,
+    "analyzedAt": "2026-02-04T19:10:00+09:00"
+  }
+}
