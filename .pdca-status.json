@@ -23,5 +23,17 @@
     "matchRate": 90,
     "iterationCount": 0,
     "analyzedAt": "2026-02-08T00:00:00+09:00"
+  },
+  "dashboard-cronjob-manager": {
+    "phase": "completed",
+    "startedAt": "2026-02-09T10:00:00+09:00",
+    "planPath": "docs/01-plan/features/dashboard-cronjob-manager.plan.md",
+    "designPath": "docs/02-design/features/dashboard-cronjob-manager.design.md",
+    "analysisPath": "docs/03-analysis/dashboard-cronjob-manager.analysis.md",
+    "reportPath": "docs/04-report/features/dashboard-cronjob-manager.report.md",
+    "matchRate": 94,
+    "iterationCount": 0,
+    "analyzedAt": "2026-02-09T10:45:00+09:00",
+    "completedAt": "2026-02-09T11:00:00+09:00"
   }
 }

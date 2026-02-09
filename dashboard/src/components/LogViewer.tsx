@@ -1,36 +1,54 @@
 import React from 'react';
 import { Box, Text } from 'ink';
+import { insertRunSeparators } from '../utils/logParser.js';
 
-interface LogViewerProps {
+interface LogPanelProps {
   jobName: string;
-  lines: string[];
+  lines: string[];       // getVisibleLines() 결과를 받음
+  totalLines: number;
+  scrollOffset: number;
   isLoading: boolean;
+  isFocused: boolean;    // 포커스 상태 (스크롤 가능 여부 표시)
 }
 
-// 로그 뷰어 컴포넌트
+// 스크롤 가능한 로그 패널 컴포넌트
 export function LogViewer({
   jobName,
   lines,
+  totalLines,
+  scrollOffset,
   isLoading,
-}: LogViewerProps): React.ReactElement {
+  isFocused,
+}: LogPanelProps): React.ReactElement {
+  // 구분선이 삽입된 라인
+  const processedLines = insertRunSeparators(lines);
+
   return (
     <Box flexDirection="column" marginTop={1}>
       <Box justifyContent="space-between">
-        <Text bold color="white">
+        <Text bold color={isFocused ? 'cyan' : 'white'}>
+          {isFocused ? '\u25b8 ' : '  '}{/* 포커스 표시 마커 */}
           최근 로그 ({jobName})
         </Text>
-        <Text dimColor>[Tab: 전환]</Text>
+        <Box>
+          {totalLines > 0 && (
+            <Text dimColor>
+              {scrollOffset > 0 ? `\u2191${scrollOffset} ` : ''}
+              {totalLines}줄
+            </Text>
+          )}
+        </Box>
       </Box>
 
-      <Text dimColor>{'─'.repeat(55)}</Text>
+      <Text dimColor>{'\u2500'.repeat(55)}</Text>
 
-      <Box flexDirection="column" height={8}>
+      <Box flexDirection="column" height={15}>
         {isLoading ? (
           <Text dimColor>로딩 중...</Text>
-        ) : lines.length === 0 ? (
+        ) : processedLines.length === 0 ? (
           <Text dimColor>로그 없음</Text>
         ) : (
-          lines.slice(-7).map((line, index) => (
+          processedLines.map((line, index) => (
             <Text key={index} wrap="truncate">
               {formatLogLine(line)}
             </Text>
@@ -41,8 +59,13 @@ export function LogViewer({
   );
 }
 
-// 로그 라인 포맷팅
+// 로그 라인 포맷팅 (구분선 처리 포함)
 function formatLogLine(line: string): React.ReactElement {
+  // 구분선인 경우
+  if (line.startsWith('\u2500')) {
+    return <Text dimColor>{line}</Text>;
+  }
+
   // 타임스탬프 추출
   const timestampMatch = line.match(/^\[(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2})\]/);
 

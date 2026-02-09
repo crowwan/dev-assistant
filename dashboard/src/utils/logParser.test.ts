@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseLogLine, getLastRunInfo, type LogEntry, type RunInfo } from './logParser.js';
+import { parseLogLine, getLastRunInfo, insertRunSeparators, type LogEntry, type RunInfo } from './logParser.js';
 
 describe('parseLogLine', () => {
   it('타임스탬프와 메시지를 파싱한다', () => {
@@ -51,6 +51,35 @@ describe('getLastRunInfo', () => {
 
     const info = getLastRunInfoFromContent(sampleLog);
     expect(info?.status).toBe('skipped');
+  });
+});
+
+describe('insertRunSeparators', () => {
+  it('시작 패턴 앞에 구분선을 삽입한다', () => {
+    const lines = [
+      '[2026-02-09 18:00:00] === Daily Summary 시작 ===',
+      '[2026-02-09 18:00:01] 작업 중...',
+      '[2026-02-09 18:00:02] === Daily Summary 완료 ===',
+      '[2026-02-10 18:00:00] === Daily Summary 시작 ===',
+      '[2026-02-10 18:00:01] 작업 중...',
+    ];
+
+    const result = insertRunSeparators(lines);
+
+    // 첫 번째 시작 앞에는 구분선 없음
+    expect(result[0]).toContain('시작');
+    // 두 번째 시작 앞에 구분선 있음
+    expect(result[3]).toContain('─');
+    expect(result[4]).toContain('시작');
+  });
+
+  it('빈 배열을 처리한다', () => {
+    expect(insertRunSeparators([])).toEqual([]);
+  });
+
+  it('시작 패턴이 없으면 구분선을 추가하지 않는다', () => {
+    const lines = ['일반 로그 1', '일반 로그 2'];
+    expect(insertRunSeparators(lines)).toEqual(lines);
   });
 });
 

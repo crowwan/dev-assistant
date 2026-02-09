@@ -1,52 +1,69 @@
 import { useState, useEffect, useCallback } from 'react';
-import { JOB_DEFINITIONS, type JobStatus } from '../types.js';
-import { getLaunchdStatuses } from '../utils/launchd.js';
+import type { DiscoveredJob } from '../types.js';
+import { scanLaunchAgents, getDisplayName } from '../utils/plistScanner.js';
+import { getAllLaunchdStatuses } from '../utils/launchd.js';
 import { getLastRunInfo } from '../utils/logParser.js';
-import { parsePlist, getNextScheduledTime } from '../utils/schedule.js';
+import { getNextScheduledTime } from '../utils/schedule.js';
 
-// 작업 상태를 주기적으로 조회하는 hook
-export function useJobs(pollingInterval: number = 1000) {
-  const [jobs, setJobs] = useState<JobStatus[]>([]);
+// 동적으로 LaunchAgents를 스캔하여 작업 상태를 조회하는 hook
+export function useJobs(pollingInterval: number = 5000) {
+  const [jobs, setJobs] = useState<DiscoveredJob[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   // 작업 상태 새로고침
   const refresh = useCallback(async () => {
-    const labels = JOB_DEFINITIONS.map((job) => job.label);
-    const launchdStatuses = await getLaunchdStatuses(labels);
+    try {
+      // 1. plist 파일 스캔
+      const plistInfos = await scanLaunchAgents();
 
-    const jobStatuses: JobStatus[] = await Promise.all(
-      JOB_DEFINITIONS.map(async (job, index) => {
-        const launchd = launchdStatuses[index];
-        const runInfo = await getLastRunInfo(job.logPath);
+      // 2. launchctl 상태 가져오기
+      const launchdStatuses = await getAllLaunchdStatuses();
 
-        // plist에서 스케줄 정보 가져오기
-        let nextRun: Date | null = null;
-        try {
-          const plistInfo = await parsePlist(job.plistPath);
-          if (plistInfo.schedule) {
-            nextRun = getNextScheduledTime(plistInfo.schedule);
+      // 3. 각 plist에 대해 DiscoveredJob 생성
+      const discovered: DiscoveredJob[] = await Promise.all(
+        plistInfos.map(async (info) => {
+          const launchdStatus = launchdStatuses.get(info.label);
+          const logPath = info.standardOutPath ?? null;
+          const runInfo = logPath ? await getLastRunInfo(logPath) : null;
+
+          // 스케줄 기반 다음 실행 시간 계산
+          let nextRun: Date | null = null;
+          if (info.schedule) {
+            try {
+              nextRun = getNextScheduledTime(info.schedule);
+            } catch {
+              // 스케줄 계산 실패 무시
+            }
           }
-        } catch {
-          // plist 파싱 실패 시 무시
-        }
 
-        return {
-          name: job.name,
-          label: job.label,
-          isRunning: launchd.isRunning,
-          isLoaded: launchd.isLoaded,
-          lastRun: runInfo?.lastRun ?? null,
-          runStatus: launchd.isRunning ? 'running' : runInfo?.status ?? 'unknown',
-          nextRun,
-          exitCode: launchd.exitCode,
-        };
-      })
-    );
+          const isRunning = launchdStatus?.isRunning ?? false;
 
-    setJobs(jobStatuses);
-    setLastUpdated(new Date());
-    setIsLoading(false);
+          return {
+            label: info.label,
+            displayName: getDisplayName(info.label),
+            plistPath: info.plistPath ?? '',
+            script: info.programArguments?.[info.programArguments.length - 1] ?? null,
+            schedule: info.schedule ?? null,
+            logPath,
+            errorLogPath: info.standardErrorPath ?? null,
+            isLoaded: launchdStatus?.isLoaded ?? false,
+            isRunning,
+            pid: launchdStatus?.pid ?? null,
+            exitCode: launchdStatus?.exitCode ?? null,
+            lastRun: runInfo?.lastRun ?? null,
+            runStatus: isRunning ? 'running' : (runInfo?.status ?? 'unknown'),
+            nextRun,
+          } satisfies DiscoveredJob;
+        })
+      );
+
+      setJobs(discovered);
+      setLastUpdated(new Date());
+      setIsLoading(false);
+    } catch {
+      setIsLoading(false);
+    }
   }, []);
 
   // 초기 로드 및 폴링

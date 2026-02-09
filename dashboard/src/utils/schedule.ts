@@ -1,11 +1,12 @@
 import { readFile } from 'fs/promises';
 import { parse as plistParse } from '@plist/parse';
 
-// StartCalendarInterval 스케줄 타입
+// StartCalendarInterval 또는 StartInterval 스케줄 타입
 export interface ScheduleInterval {
   weekday?: number; // 0 = 일요일, 1 = 월요일, ...
   hour?: number;
   minute?: number;
+  interval?: number; // StartInterval (초 단위)
 }
 
 // plist 파싱 결과 타입
@@ -15,6 +16,7 @@ export interface PlistInfo {
   programArguments?: string[];
   standardOutPath?: string;
   standardErrorPath?: string;
+  plistPath?: string; // plist 파일 경로 (scanLaunchAgents에서 설정)
 }
 
 // plist 파일을 파싱하여 작업 정보 추출
@@ -24,6 +26,7 @@ export async function parsePlist(plistPath: string): Promise<PlistInfo> {
 
   const label = parsed['Label'] as string;
   const scheduleDict = parsed['StartCalendarInterval'] as Record<string, number> | undefined;
+  const startInterval = parsed['StartInterval'] as number | undefined;
 
   let schedule: ScheduleInterval | undefined;
   if (scheduleDict) {
@@ -31,6 +34,11 @@ export async function parsePlist(plistPath: string): Promise<PlistInfo> {
       weekday: scheduleDict['Weekday'],
       hour: scheduleDict['Hour'],
       minute: scheduleDict['Minute'],
+    };
+  } else if (startInterval) {
+    // StartInterval: 초 단위 반복 간격
+    schedule = {
+      interval: startInterval,
     };
   }
 
@@ -78,4 +86,26 @@ export function getNextScheduledTime(schedule: ScheduleInterval): Date {
   }
 
   return next;
+}
+
+// 스케줄 정보를 사람이 읽기 쉬운 문자열로 포맷
+export function formatSchedule(schedule: ScheduleInterval): string {
+  // StartInterval (초 단위 반복)
+  if (schedule.interval) {
+    const hours = Math.floor(schedule.interval / 3600);
+    const minutes = Math.floor((schedule.interval % 3600) / 60);
+    if (hours > 0 && minutes > 0) return `${hours}시간 ${minutes}분 간격`;
+    if (hours > 0) return `${hours}시간 간격`;
+    return `${minutes}분 간격`;
+  }
+
+  // StartCalendarInterval (시간 기반 스케줄)
+  const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
+  const time = `${String(schedule.hour ?? 0).padStart(2, '0')}:${String(schedule.minute ?? 0).padStart(2, '0')}`;
+
+  if (schedule.weekday !== undefined) {
+    return `매주 ${weekdays[schedule.weekday]} ${time}`;
+  }
+
+  return `매일 ${time}`;
 }

@@ -99,6 +99,23 @@ export function getLastRunInfoFromContent(content: string): RunInfo | null {
   };
 }
 
+// 실행 블록 구분선 삽입
+// "=== ... 시작 ===" 패턴 앞에 구분선 삽입
+export function insertRunSeparators(lines: string[]): string[] {
+  const result: string[] = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    // "시작" 패턴이 포함된 라인 앞에 구분선 삽입 (첫 번째 라인 제외)
+    if (i > 0 && line.includes('시작') && line.includes('===')) {
+      result.push('─'.repeat(50));
+    }
+    result.push(line);
+  }
+
+  return result;
+}
+
 // 로그 파일에서 마지막 N줄 읽기
 export async function getLastLogLines(logPath: string, lineCount: number = 10): Promise<string[]> {
   try {

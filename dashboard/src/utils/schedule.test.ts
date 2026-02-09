@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { parsePlist, getNextScheduledTime, type ScheduleInterval } from './schedule.js';
+import { parsePlist, getNextScheduledTime, formatSchedule, type ScheduleInterval } from './schedule.js';
 
 describe('parsePlist', () => {
   it('plist 파일에서 Label과 StartCalendarInterval을 파싱한다', async () => {
@@ -73,5 +73,23 @@ describe('getNextScheduledTime', () => {
 
     expect(next.getDate()).toBe(9); // 오늘
     expect(next.getHours()).toBe(9);
+  });
+});
+
+describe('formatSchedule', () => {
+  it('매일 스케줄을 포맷한다', () => {
+    expect(formatSchedule({ hour: 18, minute: 0 })).toBe('매일 18:00');
+  });
+
+  it('주간 스케줄을 포맷한다', () => {
+    expect(formatSchedule({ weekday: 1, hour: 9, minute: 0 })).toBe('매주 월 09:00');
+  });
+
+  it('간격 스케줄을 포맷한다', () => {
+    expect(formatSchedule({ interval: 3600 })).toBe('1시간 간격');
+  });
+
+  it('분 단위 간격 스케줄을 포맷한다', () => {
+    expect(formatSchedule({ interval: 1800 })).toBe('30분 간격');
   });
 });

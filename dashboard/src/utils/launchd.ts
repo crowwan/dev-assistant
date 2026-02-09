@@ -59,6 +59,36 @@ export function parseLaunchctlList(output: string, labels: string[]): LaunchdSta
   });
 }
 
+// 전체 launchd 상태를 Map으로 반환 (label -> LaunchdStatus)
+export async function getAllLaunchdStatuses(): Promise<Map<string, LaunchdStatus>> {
+  try {
+    const { stdout } = await execAsync('launchctl list');
+    const lines = stdout.trim().split('\n');
+    const statusMap = new Map<string, LaunchdStatus>();
+
+    for (const line of lines) {
+      const parts = line.split('\t');
+      if (parts.length >= 3) {
+        const pidStr = parts[0].trim();
+        const exitCodeStr = parts[1].trim();
+        const label = parts[2].trim();
+
+        statusMap.set(label, {
+          label,
+          pid: pidStr === '-' ? null : parseInt(pidStr, 10),
+          exitCode: exitCodeStr === '-' ? null : parseInt(exitCodeStr, 10),
+          isRunning: pidStr !== '-',
+          isLoaded: true,
+        });
+      }
+    }
+
+    return statusMap;
+  } catch {
+    return new Map();
+  }
+}
+
 // launchctl list 명령 실행
 export async function getLaunchdStatuses(labels: string[]): Promise<LaunchdStatus[]> {
   try {
