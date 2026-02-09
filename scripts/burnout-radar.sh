@@ -3,8 +3,6 @@
 # Dev Assistant - Burnout Radar 자동 실행 스크립트
 # 매주 월요일 09:00에 launchd에 의해 실행됨
 
-set -e
-
 # 경로 설정
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
@@ -13,10 +11,12 @@ LOG_FILE="$PROJECT_DIR/logs/burnout-radar.log"
 # 로그 디렉토리 생성
 mkdir -p "$PROJECT_DIR/logs"
 
-# 환경 변수 로드 (~/.zshrc에서)
+# 환경 변수 로드 (~/.zshrc에서) - set -e 전에 실행 (zsh 전용 문법 호환 문제 방지)
 if [ -f ~/.zshrc ]; then
   source ~/.zshrc 2>/dev/null || true
 fi
+
+set -e
 
 log() {
   echo "[$(TZ=Asia/Seoul date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a "$LOG_FILE"
