@@ -3,8 +3,6 @@
 # Dev Assistant - Backlog Analyzer 자동 실행 스크립트
 # 매일 새벽 02:00에 launchd에 의해 실행됨
 
-set -e
-
 # 경로 설정
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
@@ -17,10 +15,12 @@ REPORT_FILE="$REPORT_DIR/backlog-analysis-$TODAY.md"
 mkdir -p "$PROJECT_DIR/logs"
 mkdir -p "$REPORT_DIR"
 
-# 환경 변수 로드 (~/.zshrc에서)
+# 환경 변수 로드 (~/.zshrc에서) - set -e 전에 실행 (zsh 전용 문법 호환 문제 방지)
 if [ -f ~/.zshrc ]; then
   source ~/.zshrc 2>/dev/null || true
 fi
+
+set -e
 
 log() {
   echo "[$(TZ=Asia/Seoul date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a "$LOG_FILE"
