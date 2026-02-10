@@ -124,15 +124,16 @@ $(cat "$skill_file")" \
     if [ $SECONDS -ge $timeout ]; then
       log "ERROR: Timeout (${timeout}s) - 프로세스 강제 종료"
       kill -9 $CLAUDE_PID 2>/dev/null
-      wait $CLAUDE_PID 2>/dev/null
+      wait $CLAUDE_PID 2>/dev/null || true
       return 124  # timeout exit code
     fi
     sleep 10
   done
 
   # 정상 종료 시 결과 코드 수집
-  wait $CLAUDE_PID 2>/dev/null
-  return $?
+  local exit_code=0
+  wait $CLAUDE_PID 2>/dev/null || exit_code=$?
+  return $exit_code
 }
 
 log "=== Backlog Analyzer 시작 ==="
