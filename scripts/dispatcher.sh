@@ -62,4 +62,10 @@ for pending_file in "$QUEUE_DIR"/*.pending; do
   ) &
 done
 
-log "디스패처 완료 - ${PENDING_COUNT}개 작업 실행됨"
+log "디스패처: ${PENDING_COUNT}개 작업 시작됨, 완료 대기 중..."
+
+# 모든 백그라운드 작업이 끝날 때까지 대기
+# (launchd는 부모 프로세스 종료 시 자식도 kill하므로 wait 필수)
+wait
+
+log "디스패처 완료 - 모든 작업 종료"
