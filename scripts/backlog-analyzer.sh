@@ -113,7 +113,7 @@ run_claude() {
   claude -p "아래 스킬을 실행해주세요. dentbird-solutions 코드베이스 경로는 ~/Works/devops/dentbird-solutions 입니다.
 
 $(cat "$skill_file")" \
-    --allowedTools "Bash(curl:*)" "Bash(jq:*)" "Bash(grep:*)" "Bash(find:*)" "Read" "Write" "Glob" "Grep" \
+    --allowedTools "Bash" "Read" "Write" "Glob" "Grep" \
     --max-turns 100 \
     >> "$LOG_FILE" 2>&1 &
   CLAUDE_PID=$!
