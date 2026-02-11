@@ -22,6 +22,8 @@ function getStatusIcon(status: DiscoveredJob['runStatus']): string {
       return '❌';
     case 'skipped':
       return '⏭️';
+    case 'pending':
+      return '🕐';
     default:
       return '❓';
   }
@@ -38,6 +40,8 @@ function getStatusColor(status: DiscoveredJob['runStatus']): string {
       return 'red';
     case 'skipped':
       return 'gray';
+    case 'pending':
+      return 'blue';
     default:
       return 'white';
   }

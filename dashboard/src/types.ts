@@ -14,7 +14,8 @@ export interface DiscoveredJob {
   pid: number | null;
   exitCode: number | null;
   lastRun: Date | null;
-  runStatus: 'success' | 'running' | 'failed' | 'skipped' | 'unknown';
+  runStatus: 'success' | 'running' | 'failed' | 'skipped' | 'pending' | 'unknown';
+  queueStatus: 'pending' | 'running' | 'idle'; // 큐 상태 (enqueue 방식)
   nextRun: Date | null;
 }
 
