@@ -58,14 +58,34 @@ if [ ! -f "$SKILL_FILE" ]; then
 fi
 
 # 스킬 내용을 프롬프트로 전달
+TIMEOUT=600
+
 claude -p "아래 스킬을 실행해주세요.
 
 $(cat "$SKILL_FILE")" \
   --allowedTools "Bash(git:*)" "Bash(curl:*)" "Bash(az:*)" "Bash(jq:*)" "Read" "Write" "Glob" \
   --max-turns 50 \
-  >> "$LOG_FILE" 2>&1
+  >> "$LOG_FILE" 2>&1 &
+CLAUDE_PID=$!
 
-RESULT=$?
+# Timeout 체크 루프
+SECONDS=0
+while kill -0 $CLAUDE_PID 2>/dev/null; do
+  if [ $SECONDS -ge $TIMEOUT ]; then
+    log "ERROR: Timeout (${TIMEOUT}s) - 프로세스 강제 종료"
+    kill -9 $CLAUDE_PID 2>/dev/null
+    wait $CLAUDE_PID 2>/dev/null
+    RESULT=124
+    break
+  fi
+  sleep 5
+done
+
+# 정상 종료 시 결과 코드 수집
+if [ $SECONDS -lt $TIMEOUT ]; then
+  wait $CLAUDE_PID 2>/dev/null
+  RESULT=$?
+fi
 
 if [ $RESULT -eq 0 ]; then
   log "=== Daily Summary 완료 ==="

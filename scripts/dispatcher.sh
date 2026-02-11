@@ -1,0 +1,65 @@
+#!/bin/bash
+# 5분마다 실행. 네트워크 확인 후 대기 중인 작업 실행
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
+QUEUE_DIR="$SCRIPT_DIR/queue"
+LOG_FILE="$PROJECT_DIR/logs/dispatcher.log"
+
+mkdir -p "$QUEUE_DIR"
+mkdir -p "$(dirname "$LOG_FILE")"
+
+log() {
+  echo "[$(TZ=Asia/Seoul date '+%Y-%m-%d %H:%M:%S')] $1" >> "$LOG_FILE"
+}
+
+source "$SCRIPT_DIR/common.sh"
+
+# 만료된 pending/running 파일 정리 (24시간 이상)
+find "$QUEUE_DIR" -name "*.pending" -mmin +1440 -exec rm -f {} \; 2>/dev/null
+find "$QUEUE_DIR" -name "*.running" -mmin +1440 -exec rm -f {} \; 2>/dev/null
+
+# 대기 중인 작업 확인
+PENDING_COUNT=$(ls "$QUEUE_DIR"/*.pending 2>/dev/null | wc -l | tr -d ' ')
+if [ "$PENDING_COUNT" -eq 0 ]; then
+  exit 0  # 대기 작업 없음
+fi
+
+# 네트워크 체크
+if ! check_network; then
+  log "네트워크 미연결 - 대기 중인 작업 ${PENDING_COUNT}개 보류"
+  exit 0
+fi
+
+# 대기 중인 작업 실행
+for pending_file in "$QUEUE_DIR"/*.pending; do
+  [ -f "$pending_file" ] || continue
+
+  JOB_NAME=$(basename "$pending_file" .pending)
+  SCRIPT="$SCRIPT_DIR/${JOB_NAME}.sh"
+
+  if [ ! -f "$SCRIPT" ]; then
+    log "WARNING: 스크립트 없음 - $SCRIPT, pending 삭제"
+    rm -f "$pending_file"
+    continue
+  fi
+
+  # pending -> running (동시 실행 방지)
+  mv "$pending_file" "$QUEUE_DIR/${JOB_NAME}.running"
+
+  log "실행 시작: $JOB_NAME"
+
+  # 백그라운드로 실행, 완료 후 .running 삭제
+  (
+    /bin/bash "$SCRIPT"
+    EXIT_CODE=$?
+    rm -f "$QUEUE_DIR/${JOB_NAME}.running"
+    if [ $EXIT_CODE -eq 0 ]; then
+      echo "[$(TZ=Asia/Seoul date '+%Y-%m-%d %H:%M:%S')] 실행 완료: $JOB_NAME (성공)" >> "$LOG_FILE"
+    else
+      echo "[$(TZ=Asia/Seoul date '+%Y-%m-%d %H:%M:%S')] 실행 완료: $JOB_NAME (실패: exit $EXIT_CODE)" >> "$LOG_FILE"
+    fi
+  ) &
+done
+
+log "디스패처 완료 - ${PENDING_COUNT}개 작업 실행됨"

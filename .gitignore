@@ -30,3 +30,7 @@ blog-posts/.last-find.json
 docs/.pdca-status.json
 docs/.pdca-snapshots/
 docs/.bkit-memory.json
+
+# Queue files (디스패처 런타임 상태)
+scripts/queue/*.pending
+scripts/queue/*.running
