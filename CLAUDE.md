@@ -14,7 +14,8 @@
 ## 핵심 기능
 
 1. **일일 요약** - Git 커밋, Jira 이슈, PR 상태를 수집해서 요약
-2. **개인 알림** - Slack DM으로 메시지 전송
+2. **세션 인사이트** - Claude Code 세션을 분석하여 사고 과정/핵심 고민 추출
+3. **개인 알림** - Slack DM으로 메시지 전송
 
 ## 스킬
 
@@ -43,6 +44,20 @@
 
 **자동 실행:** 매주 월요일 09:00 (launchd)
 
+### session-insight (세션 인사이트)
+```bash
+/session-insight              # 세션 분석 + Slack 전송
+/session-insight --dry-run    # 분석만 (전송 안함)
+```
+
+**분석 항목:**
+- Claude Code 세션 JSONL 파싱 (사용자 메시지 추출)
+- 작업 테마 그룹핑 (Git 커밋과 교차 대조)
+- 핵심 고민/인사이트 추출 (Architecture, Code Quality, Decision, Tech Debt, Learning)
+- 미해결 과제(Open Questions) 식별
+
+**daily-summary와의 차이:** 정량 데이터(커밋 수) vs 정성 데이터(사고 과정, 기술적 고민)
+
 ## 환경 변수
 
 ```bash
@@ -67,6 +82,7 @@ export PROJECT_REPO="~/path/to/your-project"
 | `.claude/skills/` | Claude Code 스킬 정의 |
 | `reports/` | 생성된 일일 요약 저장 |
 | `reports/burnout/` | 주간 번아웃 리포트 저장 |
+| `reports/session-insight/` | 세션 인사이트 리포트 저장 |
 
 ## 링크 형식 (환경에 맞게 수정)
 
