@@ -15,9 +15,10 @@ log() {
 
 source "$SCRIPT_DIR/common.sh"
 
-# 만료된 pending/running 파일 정리 (24시간 이상)
+# 만료된 pending/running/failed 파일 정리 (24시간 이상)
 find "$QUEUE_DIR" -name "*.pending" -mmin +1440 -exec rm -f {} \; 2>/dev/null
 find "$QUEUE_DIR" -name "*.running" -mmin +1440 -exec rm -f {} \; 2>/dev/null
+find "$QUEUE_DIR" -name "*.failed" -mmin +1440 -exec rm -f {} \; 2>/dev/null
 
 # 대기 중인 작업 확인
 PENDING_COUNT=$(ls "$QUEUE_DIR"/*.pending 2>/dev/null | wc -l | tr -d ' ')
@@ -53,11 +54,21 @@ for pending_file in "$QUEUE_DIR"/*.pending; do
   (
     /bin/bash "$SCRIPT"
     EXIT_CODE=$?
+    TIMESTAMP=$(TZ=Asia/Seoul date '+%Y-%m-%d %H:%M:%S')
     rm -f "$QUEUE_DIR/${JOB_NAME}.running"
     if [ $EXIT_CODE -eq 0 ]; then
-      echo "[$(TZ=Asia/Seoul date '+%Y-%m-%d %H:%M:%S')] 실행 완료: $JOB_NAME (성공)" >> "$LOG_FILE"
+      echo "[$TIMESTAMP] 실행 완료: $JOB_NAME (성공)" >> "$LOG_FILE"
     else
-      echo "[$(TZ=Asia/Seoul date '+%Y-%m-%d %H:%M:%S')] 실행 완료: $JOB_NAME (실패: exit $EXIT_CODE)" >> "$LOG_FILE"
+      echo "[$TIMESTAMP] 실행 완료: $JOB_NAME (실패: exit $EXIT_CODE)" >> "$LOG_FILE"
+
+      # .failed 파일 생성 (retry.sh에서 사용)
+      echo "exit_code=$EXIT_CODE timestamp=$TIMESTAMP" > "$QUEUE_DIR/${JOB_NAME}.failed"
+
+      # Slack 실패 알림 전송
+      code_desc=$(describe_exit_code "$EXIT_CODE")
+      send_slack_alert \
+        "⚠️ 크론잡 실패" \
+        "• 작업: ${JOB_NAME}\n• 종료 코드: ${EXIT_CODE} (${code_desc})\n• 시각: ${TIMESTAMP}\n\n재실행: ${SCRIPT_DIR}/enqueue.sh ${JOB_NAME}"
     fi
   ) &
 done
