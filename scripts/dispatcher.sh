@@ -13,6 +13,7 @@ log() {
   echo "[$(TZ=Asia/Seoul date '+%Y-%m-%d %H:%M:%S')] $1" >> "$LOG_FILE"
 }
 
+source ~/.zshrc 2>/dev/null
 source "$SCRIPT_DIR/common.sh"
 
 # 만료된 pending/running/failed 파일 정리 (24시간 이상)
